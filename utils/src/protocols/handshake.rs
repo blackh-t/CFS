@@ -20,6 +20,25 @@ pub struct Connection {
 pub struct Handshake {}
 
 impl Handshake {
+    /// Performs the client-side handshake.
+    ///
+    /// # Steps:
+    /// - Sends `HELLO` to the server.
+    /// - Receives the server RSA public key.
+    /// - Generates a random AES-256 session key.
+    /// - Encrypts the AES key using the server RSA public key.
+    /// - Sends the encrypted session key to the server.
+    ///
+    /// # Parameters:
+    /// - `socket`: Connected TCP stream to the server.
+    ///
+    /// # Returns:
+    /// - `Ok(Connection)` : established connection with shared AES-256 session key.
+    /// - `Err`            : handshake or cryptographic operation fails.
+    ///
+    /// # Notes:
+    /// - Uses RSA (PKCS#1 v1.5) for key exchange.
+    /// - AES key is generated locally and kept in memory.
     pub async fn client(mut socket: TcpStream) -> AppResult<Connection> {
         send_message(&mut socket, "HELLO".as_bytes()).await?;
 
@@ -43,6 +62,25 @@ impl Handshake {
         })
     }
 
+    /// Performs the server-side handshake.
+    ///
+    /// # Steps:
+    /// - Waits for `HELLO` from the client.
+    /// - Generates an RSA key pair.
+    /// - Sends the RSA public key to the client.
+    /// - Receives the encrypted AES-256 session key.
+    /// - Decrypts the session key using the RSA private key.
+    ///
+    /// # Parameters:
+    /// - `socket`: Connected TCP stream to the client.
+    ///
+    /// # Returns:
+    /// - `Ok(Connection)` : established connection with shared AES-256 session key.
+    /// - `Err`            : protocol mismatch or cryptographic failure.
+    ///
+    /// # Notes:
+    /// - Expects strict protocol order (`HELLO` first).
+    /// - RSA private key is kept only for the duration of the handshake.
     pub async fn server(mut socket: TcpStream) -> AppResult<Connection> {
         info!("Etablish handshake...");
 
