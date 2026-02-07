@@ -1,3 +1,4 @@
+pub mod cipher;
 pub mod logger;
-pub mod protocol;
+pub mod protocols;
 pub mod types;

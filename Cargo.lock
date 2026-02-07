@@ -742,6 +742,9 @@ dependencies = [
  "aes",
  "cbc",
  "env_logger",
+ "log",
+ "rand",
+ "rsa",
  "tokio",
 ]
 

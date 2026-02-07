@@ -8,3 +8,7 @@ tokio = {workspace = true}
 aes = {workspace = true}
 cbc = {workspace = true}
 env_logger = {workspace = true}
+
+log = {workspace = true}
+rand = {workspace = true}
+rsa =  {workspace = true}
