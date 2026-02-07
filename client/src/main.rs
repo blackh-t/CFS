@@ -18,7 +18,7 @@ use utils::{
 async fn main() -> AppResult<()> {
     init_logger();
     let port = env::var("CFS_PORT").expect("CFS_PORT not found");
-    let ip = env::var(" CFS_IP").expect("CFS_IP not found");
+    let ip = env::var("CFS_IP").expect("CFS_IP not found");
 
     let server_addr = format!("{}:{}", ip, port);
     let socket = TcpStream::connect(&server_addr).await?;
