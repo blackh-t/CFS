@@ -2,7 +2,7 @@ use aes::cipher::{BlockEncryptMut, KeyIvInit, block_padding::Pkcs7, generic_arra
 use log::{debug, error, info, warn};
 use rand::{Rng, thread_rng};
 use rsa::{Pkcs1v15Encrypt, RsaPrivateKey, pkcs1::EncodeRsaPublicKey, pkcs8::LineEnding};
-use std::io;
+use std::{env, io};
 use tokio::{
     fs,
     net::{TcpListener, TcpStream},
@@ -16,11 +16,15 @@ use utils::{
 #[tokio::main]
 async fn main() -> io::Result<()> {
     init_logger();
-    let listener = TcpListener::bind("127.0.0.1:5928").await?;
+    let port = env::var("CFS_PORT").expect("CFS_PORT not found");
+    let addr = format!("0.0.0.0:{}", port);
+
+    let listener = TcpListener::bind(&addr).await?;
     info!("listening on {:?}", listener.local_addr());
 
     loop {
-        if let Ok((socket, _)) = listener.accept().await {
+        if let Ok((socket, ip)) = listener.accept().await {
+            info!("connected to {}", ip);
             tokio::spawn(async move {
                 if let Err(e) = connection_handler(socket).await {
                     error!("Handler Err: {:?}", e);

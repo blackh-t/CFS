@@ -1,4 +1,7 @@
-use std::io::{self, Write};
+use std::{
+    env,
+    io::{self, Write},
+};
 
 use aes::cipher::{BlockDecryptMut, KeyIvInit, block_padding::Pkcs7, generic_array::GenericArray};
 use log::{debug, info, warn};
@@ -14,9 +17,11 @@ use utils::{
 #[tokio::main]
 async fn main() -> AppResult<()> {
     init_logger();
+    let port = env::var("CFS_PORT").expect("CFS_PORT not found");
+    let ip = env::var(" CFS_IP").expect("CFS_IP not found");
 
-    let server_addr = "127.0.0.1:5928";
-    let socket = TcpStream::connect(server_addr).await?;
+    let server_addr = format!("{}:{}", ip, port);
+    let socket = TcpStream::connect(&server_addr).await?;
     info!("Connecting to {}...", server_addr);
 
     let connection = handshake(socket).await?;
