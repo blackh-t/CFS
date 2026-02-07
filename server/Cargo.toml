@@ -1,0 +1,13 @@
+[package]
+name = "server"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = { workspace = true }
+
+utils = {workspace = true}
+log = {workspace = true}
+aes = {workspace = true}
+rand = {workspace = true}
+rsa =  {workspace = true}

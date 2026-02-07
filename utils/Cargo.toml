@@ -1,0 +1,10 @@
+[package]
+name = "utils"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = {workspace = true}
+aes = {workspace = true}
+cbc = {workspace = true}
+env_logger = {workspace = true}
