@@ -47,7 +47,7 @@ async fn connection_handler(socket: TcpStream) -> AppResult<()> {
         };
 
         let filenme = String::from_utf8(packet)?;
-        let path = format!("data/{}", filenme);
+        let path = format!("server/data/{}", filenme);
         info!("Requesting filenme {}", filenme);
         debug!("Share key: {:?}", conn.key);
 
