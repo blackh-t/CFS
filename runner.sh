@@ -1,51 +1,82 @@
 #!/bin/bash
 
-echo "----------------------------"
-echo "             CFS            "
-echo "  Crypt File Share Protocol "
-echo "----------------------------"
+# --- Styling Variables ---
+CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BOLD='\033[1m'
+DIM='\033[2m'
+BRIGHT='\033[1;37m'
+NC='\033[0m'
 
-echo "Choose mode:"
-echo "1) Server"
-echo "2) Client"
-read -p "Selection [1-2]: " MODE_CHOICE
+# --- UI Functions ---
+function show_header() {
+    clear
+    echo -e "${CYAN}┌──────────────────────────────────────────┐${NC}"
+    echo -e "${CYAN}│${NC}  ${BOLD}${GREEN}⚡ CFS${NC} - ${BOLD}Crypt File Share Protocol${NC}      ${CYAN}│${NC}"
+    echo -e "${CYAN}│${NC}  ${BOLD}Version:${NC} 1.0.0   ${CYAN}                       │${NC}"
+    echo -e "${CYAN}└──────────────────────────────────────────┘${NC}"
+    echo ""
+}
 
-read -p "Enter Port [default 45928]: " USER_PORT
+show_header
+
+# --- Mode Selection ---
+echo -e "${BRIGHT}Select Operation Mode:${NC}"
+echo -e " ${CYAN}󰙨${NC} ${DIM}[${NC}${BRIGHT}0${NC}${DIM}]${NC} Diagnostic Tests"
+echo -e " ${CYAN}󰒍${NC} ${DIM}[${NC}${BRIGHT}1${NC}${DIM}]${NC} Server Side"
+echo -e " ${CYAN}󰇚${NC} ${DIM}[${NC}${BRIGHT}2${NC}${DIM}]${NC} Client Side"
+echo ""
+printf "${BOLD}${CYAN}Selection » ${NC}"
+read MODE_CHOICE
+
+# --- Port Setup ---
+printf "${BOLD}Port ${DIM}[default 45928] » ${NC}"
+read USER_PORT
 CFS_PORT=${USER_PORT:-45928}
 export CFS_PORT
 
-if [ "$MODE_CHOICE" == "1" ]; then
-    echo "[*] Starting Server on port $CFS_PORT..."
-    cargo run --bin server
+# --- Logic ---
+case $MODE_CHOICE in
+0)
+    echo -e "\n${YELLOW}󰙨 Running Test Suite...${NC}"
+    RUST_LOG=info cargo test -- --nocapture
+    read -n 1 -s -r -p "Press any key to return to menu..."
+    exec "$0" # Re-runs the script
+    ;;
 
-elif [ "$MODE_CHOICE" == "2" ]; then
-    # Load last used ip.
+1)
+    echo -e "\n${GREEN}🛰️ Starting Server on port ${BOLD}$CFS_PORT${NC}..."
+    RUST_LOG=info cargo run --bin server
+    ;;
+
+2)
     LAST_IP_FILE=".last_ip"
-    DEFAULT_IP=""
+    DEFAULT_IP=$([ -f "$LAST_IP_FILE" ] && cat "$LAST_IP_FILE" || echo "")
 
-    if [ -f "$LAST_IP_FILE" ]; then
-        DEFAULT_IP=$(cat "$LAST_IP_FILE")
-        PROMPT="Enter Server IP Address [default $DEFAULT_IP]: "
+    if [ -n "$DEFAULT_IP" ]; then
+        printf "${BOLD}Server IP ${DIM}[default $DEFAULT_IP] » ${NC}"
     else
-        PROMPT="Enter Server IP Address: "
+        printf "${BOLD}Server IP » ${NC}"
     fi
 
-    read -p "$PROMPT" USER_IP
+    read USER_IP
     CFS_IP=${USER_IP:-$DEFAULT_IP}
 
     if [ -z "$CFS_IP" ]; then
-        echo "Error: IP address is required for client mode."
+        echo -e "${BOLD}${YELLOW}Error: IP required.${NC}"
         exit 1
     fi
 
-    # Save this IP for next time
     echo "$CFS_IP" >"$LAST_IP_FILE"
-
     export CFS_IP
-    echo "[*] Connecting to $CFS_IP:$CFS_PORT..."
-    cargo run --bin client
+    echo -e "\n${GREEN}📥 Connecting to ${BOLD}$CFS_IP:$CFS_PORT${NC}..."
+    RUST_LOG=info cargo run --bin client
+    ;;
 
-else
-    echo "Invalid selection."
-    exit 1
-fi
+*)
+    echo -e "${BOLD}${YELLOW}Invalid selection.${NC}"
+    sleep 1
+    exec "$0"
+    ;;
+esac
