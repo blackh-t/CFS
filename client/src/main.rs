@@ -4,7 +4,7 @@ use std::{
 };
 
 use log::{debug, info, warn};
-use tokio::net::TcpStream;
+use tokio::{fs, net::TcpStream};
 use utils::{
     cipher::decrypt_data,
     logger::init_logger,
@@ -59,7 +59,10 @@ async fn download_from(mut socket: TcpStream, key: Vec<u8>, filename: &str) -> A
 
     let (iv, ciphertext) = cipher_data.split_at_mut(16);
     let data = decrypt_data(&mut ciphertext.to_vec(), &key, iv)?;
-    info!("got file {}", String::from_utf8(data.to_vec()).unwrap());
+
+    let file_path = format!("client/data/{}", filename);
+    fs::write(file_path, data).await?;
+    info!("stored in client/data/{}", filename);
 
     Ok(())
 }
