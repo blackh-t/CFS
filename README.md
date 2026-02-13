@@ -38,6 +38,9 @@ chmod +x runner.sh
 ./runner.sh
 
 ```
+<p align="center">
+  <img src="https://github.com/blackh-t/CFS/raw/dev/cfs.gif" width="1200" alt="CFS Demo">
+</p>
 
 ### Manual Usage
 
@@ -66,3 +69,4 @@ The project includes a robust test suite covering cryptographic round-trips, han
 RUST_LOG=info cargo test -- --nocapture
 
 ```
+
