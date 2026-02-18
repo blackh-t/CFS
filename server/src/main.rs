@@ -1,4 +1,4 @@
-use log::{debug, error, info, warn};
+use log::{debug, error, info};
 use std::{env, io};
 use tokio::{
     fs,
@@ -39,30 +39,26 @@ async fn connection_handler(socket: TcpStream) -> AppResult<()> {
     let mut conn = Handshake::server(socket).await?;
     info!("Secure connection established!");
 
-    // File Transfer
-    loop {
-        let packet = match recv_message(&mut conn.socket).await {
-            Ok(data) => data,
-            Err(_) => break,
-        };
+    let packet = match recv_message(&mut conn.socket).await {
+        Ok(data) => data,
+        Err(e) => return Err(e),
+    };
 
-        let filenme = String::from_utf8(packet)?;
-        let path = format!("server/data/{}", filenme);
-        info!("Requesting filenme {}", filenme);
-        debug!("Share key: {:?}", conn.key);
+    let filenme = String::from_utf8(packet)?;
+    let path = format!("server/data/{}", filenme);
+    info!("Requesting filenme {}", filenme);
+    debug!("Share key: {:?}", conn.key);
 
-        let mut file_content = match fs::read(path).await {
-            Ok(content) => content,
-            Err(_) => {
-                warn!("File not found");
-                return Ok(());
-            }
-        };
+    let mut file_content = match fs::read(path).await {
+        Ok(content) => content,
+        Err(e) => {
+            return Err(e.into());
+        }
+    };
 
-        let packet = encrypt_data(&mut file_content, &conn.key)?;
-        send_message(&mut conn.socket, &packet).await?;
-        info!("File Transfered.");
-    }
+    let packet = encrypt_data(&mut file_content, &conn.key)?;
+    send_message(&mut conn.socket, &packet).await?;
+    info!("File Transfered.");
 
     Ok(())
 }
