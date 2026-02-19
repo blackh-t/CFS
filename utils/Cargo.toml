@@ -12,3 +12,10 @@ env_logger = {workspace = true}
 log = {workspace = true}
 rand = {workspace = true}
 rsa =  {workspace = true}
+
+[dev-dependencies]
+iai-callgrind = "0.11.1"
+
+[[bench]]
+name = "cipher_bench"
+harness = false # using a custom benchmarker (iai)

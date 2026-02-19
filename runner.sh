@@ -12,10 +12,9 @@ NC='\033[0m'
 # --- UI Functions ---
 function show_header() {
     clear
-    echo -e "${CYAN}┌──────────────────────────────────────────┐${NC}"
-    echo -e "${CYAN}│${NC}  ${BOLD}${GREEN}⚡ CFS${NC} - ${BOLD}Crypt File Share Protocol${NC}      ${CYAN}│${NC}"
-    echo -e "${CYAN}│${NC}  ${BOLD}Version:${NC} 1.0.0   ${CYAN}                       │${NC}"
-    echo -e "${CYAN}└──────────────────────────────────────────┘${NC}"
+    echo -e "${BOLD}${GREEN}⚡ CFS${NC} - ${BOLD}Crypt File Share Protocol${NC}"
+    echo -e "${BOLD}Version:${NC} 1.0.0   ${CYAN}"
+    echo -e "${CYAN}──────────────────────────────────────────${NC}"
     echo ""
 }
 
@@ -26,6 +25,7 @@ echo -e "${BRIGHT}Select Operation Mode:${NC}"
 echo -e " ${CYAN}󰙨${NC} ${DIM}[${NC}${BRIGHT}0${NC}${DIM}]${NC} Diagnostic Tests"
 echo -e " ${CYAN}󰒍${NC} ${DIM}[${NC}${BRIGHT}1${NC}${DIM}]${NC} Server Side"
 echo -e " ${CYAN}󰇚${NC} ${DIM}[${NC}${BRIGHT}2${NC}${DIM}]${NC} Client Side"
+echo -e " ${CYAN}@${NC} ${DIM}[${NC}${BRIGHT}3${NC}${DIM}]${NC} Performance Benchmark"
 echo ""
 printf "${BOLD}${CYAN}Selection » ${NC}"
 read MODE_CHOICE
@@ -73,7 +73,45 @@ case $MODE_CHOICE in
     echo -e "\n${GREEN}📥 Connecting to ${BOLD}$CFS_IP:$CFS_PORT${NC}..."
     RUST_LOG=info cargo run --bin client
     ;;
+3)
+    echo -e "\n${YELLOW}Running Performance Benchmarks...${NC}"
 
+    # Auto-install Valgrind if missing
+    if ! command -v valgrind &>/dev/null; then
+        echo -e "${YELLOW}⚙️ 'valgrind' is missing. Auto-installing...${NC}"
+        # Checks if you are on Fedora (dnf) or Ubuntu/Debian (apt)
+        if command -v dnf &>/dev/null; then
+            sudo dnf install -y valgrind
+        elif command -v apt &>/dev/null; then
+            sudo apt update && sudo apt install -y valgrind
+        else
+            echo -e "${BOLD}❌ Could not detect package manager. Please install valgrind manually.${NC}"
+            exit 1
+        fi
+    fi
+
+    # Auto-install the iai-callgrind-runner if missing
+    if ! command -v iai-callgrind-runner &>/dev/null && [ ! -f "$HOME/.cargo/bin/iai-callgrind-runner" ]; then
+        echo -e "${YELLOW}⚙️ Cargo runner is missing. Auto-installing...${NC}"
+        cargo install --version 0.11.1 iai-callgrind-runner
+    fi
+
+    # Run the benchmark (with the explicit path just in case)
+    echo -e "${GREEN} Starting Benchmark...${NC}"
+    cargo bench -p utils
+
+    # If it STILL fails (e.g., version mismatch), try forcing the install
+    if [ $? -ne 0 ]; then
+        echo -e "\n${YELLOW}⚙️ Benchmark failed (likely version mismatch). Forcing runner update...${NC}"
+        cargo install --version 0.11.1 iai-callgrind-runner
+        echo -e "${GREEN} Retrying Benchmark...${NC}"
+        IAI_CALLGRIND_RUNNER="$HOME/.cargo/bin/iai-callgrind-runner" cargo bench -p utils
+    fi
+
+    echo ""
+    read -n 1 -s -r -p "Press any key to return to menu..."
+    exec "$0"
+    ;;
 *)
     echo -e "${BOLD}${YELLOW}Invalid selection.${NC}"
     sleep 1
